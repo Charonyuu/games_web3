@@ -1,7 +1,7 @@
 // lib/nft.js
 import { ethers } from "ethers";
 
-const CONTRACT_ADDRESS = "0x12761B1b00EC7559056a4c33a81fC75Fb258d84C"; // 替换为你的合约地址
+const CONTRACT_ADDRESS = "0x792e80d9bbAEdF8499bB44F296EBa99371306Ac0"; // 替换为你的合约地址
 const ABI = [
   {
     inputs: [
@@ -491,6 +491,25 @@ const ABI = [
   {
     inputs: [
       {
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
+    ],
+    name: "getPrice",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "address",
         name: "user",
         type: "address",
@@ -597,7 +616,7 @@ export async function getMintableNFTs() {
       console.log("nftIds:", nftIds); // 调试输出nftIds
 
       const nfts = await Promise.all(
-        nftIds.map(async (id) => {
+        nftIds[0].map(async (id, index) => {
           // 确保id是字符串格式
           const tokenId = ethers.BigNumber.from(id).toString();
           console.log("tokenId:", tokenId); // 调试输出tokenId
@@ -607,13 +626,15 @@ export async function getMintableNFTs() {
             uri.replace("ipfs://", "https://ipfs.io/ipfs/")
           );
           const metadata = await response.json();
-
+          console.log("metadata:", metadata); // 调试输出metadata
           return {
             id: tokenId,
-            ...metadata,
+            image: metadata.image,
+            price: ethers.utils.formatEther(nftIds[2][index]),
           };
         })
       );
+      console.log("nfts:", nfts); // 调试输出nfts
 
       return nfts;
     } catch (error) {
@@ -633,10 +654,13 @@ export async function mintNFT(tokenId) {
     const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
     try {
-      const price = ethers.utils.parseEther("0.001"); // 确保价格是正确的BigNumber格式
+      const priceInWei = await contract.getPrice(
+        ethers.BigNumber.from(tokenId)
+      );
+      // Send the transaction with the correct amount of Ether
       const tx = await contract.buyCharacter(ethers.BigNumber.from(tokenId), {
-        value: price,
-      }); // 确保tokenId也是正确的BigNumber格式
+        value: priceInWei,
+      });
       await tx.wait();
       console.log("NFT minted successfully!");
     } catch (error) {

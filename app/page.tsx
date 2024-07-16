@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { getMintableNFTs } from "./hooks/nft";
+import { getMintableNFTs, mintNFT } from "./hooks/nft";
 
 export default function Home() {
   const [nfts, setNfts] = useState<any[]>([]);
@@ -16,6 +16,15 @@ export default function Home() {
 
     fetchNFTs();
   }, []);
+
+  const games = [
+    {
+      name: "Flappy Bird",
+      image: "/logo/flappybird.png",
+      link: "flappyBird",
+    },
+  ];
+
   return (
     <div className="flex flex-col h-screen">
       <header className="bg-primary text-primary-foreground py-4 px-6 flex items-center justify-between">
@@ -53,68 +62,25 @@ export default function Home() {
       <main className="flex-1 bg-background p-8">
         <h2 className="text-xl font-bold mb-6">Games</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          <div className="bg-card rounded-lg overflow-hidden shadow-lg transition-all hover:scale-105 hover:shadow-xl">
-            <img
-              src="/FlappyBirdAssets/bird.png"
-              alt="FlappyBirdAssets"
-              width={400}
-              height={300}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-4">
-              <h3 className="text-lg font-bold mb-2">Flappy Bird</h3>
-              <Link href="flappyBird">
-                <Button size="sm" className="w-full">
-                  Play
-                </Button>
-              </Link>
+          {games.map((game) => (
+            <div className="bg-card rounded-lg overflow-hidden shadow-lg transition-all hover:scale-105 hover:shadow-xl">
+              <img
+                src={game.image}
+                alt={game.name + "logo"}
+                width={400}
+                height={300}
+                className="w-full h-48 object-cover"
+              />
+              <div className="p-4">
+                <h3 className="text-lg font-bold mb-2">{game.name}</h3>
+                <Link href={game.link}>
+                  <Button size="sm" className="w-full">
+                    Play
+                  </Button>
+                </Link>
+              </div>
             </div>
-          </div>
-          <div className="bg-card rounded-lg overflow-hidden shadow-lg transition-all hover:scale-105 hover:shadow-xl">
-            <img
-              src="/placeholder.svg"
-              alt="Game 2"
-              width={400}
-              height={300}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-4">
-              <h3 className="text-lg font-bold mb-2">Shooter</h3>
-              <Button size="sm" className="w-full">
-                Play
-              </Button>
-            </div>
-          </div>
-          <div className="bg-card rounded-lg overflow-hidden shadow-lg transition-all hover:scale-105 hover:shadow-xl">
-            <img
-              src="/placeholder.svg"
-              alt="Game 3"
-              width={400}
-              height={300}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-4">
-              <h3 className="text-lg font-bold mb-2">Puzzle</h3>
-              <Button size="sm" className="w-full">
-                Play
-              </Button>
-            </div>
-          </div>
-          <div className="bg-card rounded-lg overflow-hidden shadow-lg transition-all hover:scale-105 hover:shadow-xl">
-            <img
-              src="/placeholder.svg"
-              alt="Game 4"
-              width={400}
-              height={300}
-              className="w-full h-48 object-cover"
-            />
-            <div className="p-4">
-              <h3 className="text-lg font-bold mb-2">Racing</h3>
-              <Button size="sm" className="w-full">
-                Play
-              </Button>
-            </div>
-          </div>
+          ))}
         </div>
         <h2 className="text-xl font-bold mt-12 mb-6">Store</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -149,7 +115,7 @@ export default function Home() {
   );
 }
 
-function ShoppingCartIcon(props) {
+function ShoppingCartIcon(props: any) {
   return (
     <svg
       {...props}
@@ -170,7 +136,7 @@ function ShoppingCartIcon(props) {
   );
 }
 
-function UserIcon(props) {
+function UserIcon(props: any) {
   return (
     <svg
       {...props}
@@ -186,26 +152,6 @@ function UserIcon(props) {
     >
       <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
-    </svg>
-  );
-}
-
-function XIcon(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
     </svg>
   );
 }
