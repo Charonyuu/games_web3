@@ -102,9 +102,15 @@ export default function Home() {
                   <span className="text-primary font-bold">
                     {nft.price} ETH
                   </span>
-                  <Button size="sm" onClick={() => mintNFT(nft.id)}>
-                    Buy
-                  </Button>
+                  {nft.own ? (
+                    <Button size="sm" className=" bg-green-500">
+                      Own
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={() => mintNFT(nft.id)}>
+                      Buy
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

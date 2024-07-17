@@ -603,20 +603,29 @@ const ABI = [
   },
 ];
 
+export type NFTItem = {
+  name: string;
+  description: string;
+  image: string;
+  price: number;
+  id: string;
+  own: boolean;
+};
+
 export async function getMintableNFTs() {
   if (typeof window !== "undefined" && typeof window.ethereum !== "undefined") {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
-    console.log("Web3 provider:", provider); // 调试输出Web3 provider
+    const signer = provider.getSigner();
     const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-    console.log("Contract:", contract); // 调试输出Contract
 
     try {
       // 调用合约的方法获取商店可以mint的NFT
+      const userAddress = await signer.getAddress();
+      const userNftIds = await contract.getUserCharacters(userAddress);
       const nftIds = await contract.getCharacters(); // 确保getCharacters是view方法
-      console.log("nftIds:", nftIds); // 调试输出nftIds
-
+      console.log("user", userNftIds);
       const nfts = await Promise.all(
-        nftIds[0].map(async (id, index) => {
+        nftIds[0].map(async (id: number, index: number) => {
           // 确保id是字符串格式
           const tokenId = ethers.BigNumber.from(id).toString();
           console.log("tokenId:", tokenId); // 调试输出tokenId
@@ -627,10 +636,12 @@ export async function getMintableNFTs() {
           );
           const metadata = await response.json();
           console.log("metadata:", metadata); // 调试输出metadata
+
           return {
             id: tokenId,
-            image: metadata.image,
+            ...metadata,
             price: ethers.utils.formatEther(nftIds[2][index]),
+            own: userNftIds[index + 1] > 0,
           };
         })
       );
@@ -647,19 +658,67 @@ export async function getMintableNFTs() {
   }
 }
 
-export async function mintNFT(tokenId) {
+export async function getOwnedNFTs(): Promise<NFTItem[]> {
   if (typeof window !== "undefined" && typeof window.ethereum !== "undefined") {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     const signer = provider.getSigner();
     const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
     try {
-      const priceInWei = await contract.getPrice(
-        ethers.BigNumber.from(tokenId)
+      const userAddress = await signer.getAddress();
+      const nftIds = await contract.getUserCharacters(userAddress);
+      console.log("nftIds:", nftIds); // 调试输出nftIds
+
+      const ownedNFTs: NFTItem[] = [];
+      await Promise.all(
+        nftIds.forEach(async (id: number, index: number) => {
+          if (id > 0) return;
+          const tokenId = ethers.BigNumber.from(index).toString();
+          const uri = await contract.uri(tokenId);
+          const response = await fetch(
+            uri.replace("ipfs://", "https://ipfs.io/ipfs/")
+          );
+          const metadata = await response.json();
+          console.log("metadata:", metadata); // 调试输出metadata
+
+          ownedNFTs.push({
+            id: tokenId,
+            ...metadata,
+            price: ethers.utils.formatEther(
+              await contract.getPrice(ethers.BigNumber.from(tokenId))
+            ),
+            own: true,
+          });
+        })
+      );
+      console.log("ownedNFTs:", ownedNFTs); // 调试输出nfts
+
+      return ownedNFTs;
+    } catch (error) {
+      console.error("Error fetching owned NFTs:", error);
+      return [];
+    }
+  } else {
+    console.log("MetaMask is not installed or not in the browser environment");
+    return [];
+  }
+}
+
+export async function mintNFT(tokenId: number) {
+  if (typeof window !== "undefined" && typeof window.ethereum !== "undefined") {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const signer = provider.getSigner();
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+    try {
+      const priceInWei = await contract.getPrice(tokenId.toString());
+      console.log(
+        "priceInWei toHexString:",
+        ethers.BigNumber.from(priceInWei).toNumber()
       );
       // Send the transaction with the correct amount of Ether
       const tx = await contract.buyCharacter(ethers.BigNumber.from(tokenId), {
-        value: priceInWei,
+        value: 1,
       });
       await tx.wait();
       console.log("NFT minted successfully!");
